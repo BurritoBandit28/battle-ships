@@ -1,6 +1,7 @@
 package game;
 
 import gui.GridElement;
+import gui.ShipScreen;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -15,7 +16,6 @@ import java.io.IOException;
 public class Tile extends JPanel {
 
     private int[] gridIndex;
-    private String coords;
     private boolean damaged;
     private boolean isShip;
     private shipPart shipPart;
@@ -30,7 +30,6 @@ public class Tile extends JPanel {
 
     // sprites
     private final String sprite_location = "src/main/resources/sprites/";
-
     private BufferedImage waves = ImageIO.read(new File(sprite_location + "waves.png"));
     private BufferedImage radar = ImageIO.read(new File(sprite_location + "radar.png"));
     private BufferedImage enemy_sunk = ImageIO.read(new File(sprite_location + "enemy_sunk.png"));
@@ -38,6 +37,8 @@ public class Tile extends JPanel {
     private BufferedImage ship_front = ImageIO.read(new File(sprite_location + "ship_front.png"));
     private BufferedImage ship_middle = ImageIO.read(new File(sprite_location + "ship_middle.png"));
     private BufferedImage ship_back = ImageIO.read(new File(sprite_location + "ship_back.png"));
+    private AffineTransform ship_transform = new AffineTransform();
+    private AffineTransform radar_transform = new AffineTransform();
     /*
     private BufferedImage ship_front_damaged = ImageIO.read(new File(sprite_location + "ship_front_damaged.png"));
     private BufferedImage ship_middle_damaged = ImageIO.read(new File(sprite_location + "ship_middle_damaged.png"));
@@ -59,8 +60,9 @@ public class Tile extends JPanel {
         this.isShip = false;
         this.shipPart = shipPart.NONE;
         this.type = grid.getType();
-        this.coords = coord;
 
+        ship_transform.scale(3.737, 3.737);
+        radar_transform = ship_transform;
 
         this.grid = grid;
 
@@ -77,11 +79,10 @@ public class Tile extends JPanel {
                 public void mouseClicked(MouseEvent e) {
                     super.mouseClicked(e);
                     if (type == GridElement.GridType.MAP) {
-                        setShipPart(shipPart.BACK);
-                        int[] ind = getGridIndex();
-                        System.out.println(grid.getTile(ind[0] - 1, ind[1]).coords + " - " + coords);
-                        grid.getTile(ind[0], ind[1] -1 ).setShipPart(shipPart.MIDDLE);
-                        grid.getTile(ind[0], ind[1] - 2).setShipPart(shipPart.FRONT);
+
+                        // does what it says on the tin - value of 6 for testing purposes only
+                        drawShipsToTiles(3);
+
                     }
                     else {
                         if (current_sprite == enemy_damaged) {
@@ -90,7 +91,6 @@ public class Tile extends JPanel {
                         else {
                             current_sprite = enemy_damaged;
                         }
-
                     }
 
                     updateUI();
@@ -105,12 +105,110 @@ public class Tile extends JPanel {
 
         Graphics2D g2d = (Graphics2D) g.create();
 
-        AffineTransform transform = new AffineTransform();
-
-        transform.scale(3.75, 3.75);
-        //transform.translate(1.25, 1.25);
-        g2d.drawRenderedImage(current_sprite, transform);
+        if (ShipScreen.getDir() == 'e' && current_sprite != this.waves) {
+            this.ship_transform.scale(-1, 1);
+            ship_transform.translate(-current_sprite.getWidth(), 0);
+        }
+        if (this.type == GridElement.GridType.MAP) {
+            g2d.drawRenderedImage(current_sprite, this.ship_transform);
+        }
+        else {
+            g2d.drawRenderedImage(current_sprite, this.radar_transform);
+        }
     }
+
+    private void drawShipsToTiles(int length) {
+        int[] ind = getGridIndex();
+
+        if (this.isShip()) {
+            return;
+        }
+
+        if (length < 2) {
+            throw new IllegalArgumentException("Err - Ship lenght shorter than 2");
+        }
+
+        // replace with switch case for all directions possible
+
+        switch (ShipScreen.getDir()) {
+            case 'n' : {
+                if (grid.getTile(ind[0], ind[1]- (length-1)).isShip()) {
+                    return;
+                }
+                setShipPart(shipPart.BACK);
+                for(int x = 0; x < length-2; x++) {
+                    if (grid.getTile(ind[0], ind[1] - (1+x)).isShip()){
+                        for (int y = 1; y < x+2; y++) {
+                            grid.getTile(ind[0], ind[1] - (1+(x-y))).setShip(false);
+                        }
+                        return;
+                    }
+                    grid.getTile(ind[0], ind[1] - (1+x)).setShipPart(shipPart.MIDDLE);
+                }
+
+                grid.getTile(ind[0], ind[1] - length+1).setShipPart(shipPart.FRONT);
+                break;
+            }
+            case 'e' : {
+
+                if (grid.getTile(ind[0] + (length-1), ind[1]).isShip()) {
+                    return;
+                };
+
+                setShipPart(shipPart.BACK);
+                for(int x = 0; x < length-2; x++) {
+                    if (grid.getTile(ind[0] + (1 + x), ind[1]).isShip()){
+                        for (int y = 1; y < x+2; y++) {
+                            grid.getTile(ind[0] + (1 + (x-y)), ind[1]).setShip(false);
+                        }
+                        return;
+                    }
+                    grid.getTile(ind[0] + (1 + x), ind[1]).setShipPart(shipPart.MIDDLE);
+                }
+                grid.getTile(ind[0] + length-1, ind[1]).setShipPart(shipPart.FRONT);
+
+                break;
+            }
+            case 's' : {
+
+                if (grid.getTile(ind[0], ind[1] + (length-1)).isShip()) {
+                    return;
+                }
+                setShipPart(shipPart.BACK);
+                for(int x = 0; x < length-2; x++) {
+                    if (grid.getTile(ind[0], ind[1] + (1+x)).isShip()) {
+                        for (int y = 1; y < x+2; y++) {
+                            grid.getTile(ind[0], ind[1] + (1+(x-y))).setShip(false);
+                        }
+                        return;
+                    }
+                    grid.getTile(ind[0], ind[1] + (1+x)).setShipPart(shipPart.MIDDLE);
+
+                }
+                grid.getTile(ind[0], ind[1] + length-1).setShipPart(shipPart.FRONT);
+                break;
+            }
+            case 'w' : {
+                if (grid.getTile(ind[0]-(length-1), ind[1]).isShip()) {
+                    return;
+                }
+                setShipPart(shipPart.BACK);
+                for (int x = 0; x < length-2; x++){
+                    if (grid.getTile(ind[0] - (1+x), ind[1]).isShip()) {
+                        for (int y = 1; y < x+2; y++) {
+                            grid.getTile(ind[0] - (1+(x-y)), ind[1]).setShip(false);
+                        }
+                        return;
+                    }
+                    grid.getTile(ind[0] - (1+x), ind[1]).setShipPart(shipPart.MIDDLE);
+                }
+                grid.getTile(ind[0] - length+1, ind[1]).setShipPart(shipPart.FRONT);
+                break;
+            }
+        }
+    }
+
+
 
     public int[] getGridIndex() {
         return this.gridIndex;
@@ -130,10 +228,6 @@ public class Tile extends JPanel {
 
     public boolean getDamaged() {
         return this.damaged;
-    }
-
-    public String getCoords() {
-        return this.coords;
     }
 
     public Tile.shipPart getShipPart() {
@@ -200,3 +294,4 @@ public class Tile extends JPanel {
     }
 
 }
+
