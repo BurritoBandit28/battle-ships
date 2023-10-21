@@ -1,4 +1,3 @@
-import gui.GridElement;
 import gui.ShipScreen;
 
 import java.io.IOException;

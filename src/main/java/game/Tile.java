@@ -16,19 +16,35 @@ public class Tile extends JPanel {
 
     private int[] gridIndex;
     private String coords;
-    private int damage;
+    private boolean damaged;
     private boolean isShip;
     private shipPart shipPart;
 
+    private int shipID=0;
+
+    private int lastShipID=0;
+
     private GridElement.GridType type;
 
-    private Tile tile;
+    private GridElement grid;
 
     // sprites
-    private String sprite_location = "src/main/resources/sprites/";
-    private BufferedImage waves = ImageIO.read(new File(sprite_location + "waves.png"));
+    private final String sprite_location = "src/main/resources/sprites/";
 
-    private BufferedImage background;
+    private BufferedImage waves = ImageIO.read(new File(sprite_location + "waves.png"));
+    private BufferedImage radar = ImageIO.read(new File(sprite_location + "radar.png"));
+    private BufferedImage enemy_sunk = ImageIO.read(new File(sprite_location + "enemy_sunk.png"));
+    private BufferedImage enemy_damaged = ImageIO.read(new File(sprite_location + "enemy_damaged.png"));
+    private BufferedImage ship_front = ImageIO.read(new File(sprite_location + "ship_front.png"));
+    private BufferedImage ship_middle = ImageIO.read(new File(sprite_location + "ship_middle.png"));
+    private BufferedImage ship_back = ImageIO.read(new File(sprite_location + "ship_back.png"));
+    /*
+    private BufferedImage ship_front_damaged = ImageIO.read(new File(sprite_location + "ship_front_damaged.png"));
+    private BufferedImage ship_middle_damaged = ImageIO.read(new File(sprite_location + "ship_middle_damaged.png"));
+    private BufferedImage ship_back_damaged = ImageIO.read(new File(sprite_location + "ship_back_damaged.png"));
+     */
+
+    private BufferedImage current_sprite;
 
     @Override
     public Dimension getPreferredSize() {
@@ -37,39 +53,52 @@ public class Tile extends JPanel {
 
 
 
-    public Tile(String coord, GridElement.GridType type) throws IOException {
+    public Tile(String coord, GridElement grid) throws IOException {
         this.gridIndex = GridElement.coord_to_index(coord);
-        this.damage=0;
+        this.damaged = false;
         this.isShip = false;
         this.shipPart = shipPart.NONE;
-        this.type = type;
+        this.type = grid.getType();
         this.coords = coord;
 
-        this.tile = this;
+
+        this.grid = grid;
 
         switch (this.type) {
             case MAP -> {
-                background =  ImageIO.read(new File(sprite_location + "waves.png"));
+                current_sprite =  waves;
             }
             case RADAR -> {
-                background = ImageIO.read(new File(sprite_location + "radar.png"));
+                current_sprite = radar;
             }
         }
             this.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     super.mouseClicked(e);
-                    System.out.println(coord);
-                    try {
-                        background = ImageIO.read(new File(sprite_location + "creepy_ass_smiley.png"));
-                        tile.updateUI();
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
+                    if (type == GridElement.GridType.MAP) {
+                        setShipPart(shipPart.BACK);
+                        int[] ind = getGridIndex();
+                        System.out.println(grid.getTile(ind[0] - 1, ind[1]).coords + " - " + coords);
+                        grid.getTile(ind[0], ind[1] -1 ).setShipPart(shipPart.MIDDLE);
+                        grid.getTile(ind[0], ind[1] - 2).setShipPart(shipPart.FRONT);
                     }
+                    else {
+                        if (current_sprite == enemy_damaged) {
+                            current_sprite = enemy_sunk;
+                        }
+                        else {
+                            current_sprite = enemy_damaged;
+                        }
+
+                    }
+
+                    updateUI();
                 }
             });
 
     }
+
 
     protected void paintComponent(Graphics g ) {
         super.paintComponent(g);
@@ -80,7 +109,7 @@ public class Tile extends JPanel {
 
         transform.scale(3.75, 3.75);
         //transform.translate(1.25, 1.25);
-        g2d.drawRenderedImage(background, transform);
+        g2d.drawRenderedImage(current_sprite, transform);
     }
 
     public int[] getGridIndex() {
@@ -88,29 +117,79 @@ public class Tile extends JPanel {
     }
 
     public boolean isShip() {
-        return isShip;
+        return this.isShip;
     }
 
-    public int getDamage() {
-        return damage;
+    public void setShip(boolean yn) {
+        if (!yn) {
+            this.current_sprite = this.waves;
+        }
+        this.isShip = yn;
+        this.updateUI();
+    }
+
+    public boolean getDamaged() {
+        return this.damaged;
     }
 
     public String getCoords() {
-        return coords;
+        return this.coords;
     }
 
     public Tile.shipPart getShipPart() {
-        return shipPart;
+        return this.shipPart;
     }
 
-    public void setDamage(int damage) {
-        this.damage = damage;
+    public void setShipID() {
+        this.shipID = lastShipID++;
+    }
+
+    public int getShipID() {
+        return this.shipID;
+    }
+
+    public void setDamaged(boolean damaged) {
+
+        this.damaged = damaged;
+        /*
+        switch (shipPart) {
+            case FRONT:
+                this.current_sprite = ship_front_damaged;
+                break;
+            case MIDDLE:
+                this.current_sprite = ship_middle_damaged;
+                break;
+            case BACK:
+                this.current_sprite = ship_back_damaged;
+                break;
+            case NONE:
+                setShip(false);
+                break;
+        }
+
+         */
+        this.updateUI();
     }
 
 
     public void setShipPart(Tile.shipPart shipPart) {
         this.isShip = true;
+        switch (shipPart) {
+            case FRONT:
+                this.current_sprite = ship_front;
+                break;
+            case MIDDLE:
+                this.current_sprite = ship_middle;
+                break;
+            case BACK:
+                this.current_sprite = ship_back;
+                break;
+            case NONE:
+                setShip(false);
+                break;
+        }
         this.shipPart = shipPart;
+        this.updateUI();
     }
 
     public enum shipPart {

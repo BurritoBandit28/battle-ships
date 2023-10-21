@@ -2,15 +2,9 @@ package gui;
 
 import game.Tile;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class GridElement extends JPanel {
@@ -57,7 +51,7 @@ public class GridElement extends JPanel {
             int colNumber = 1;
             for (int j = 0; j < 10; j++) {
                 String tileName = rowChar + "," + colNumber;
-                grid[i][j] = new Tile(tileName, type);
+                grid[i][j] = new Tile(tileName, this);
                 this.add(grid[i][j]);
                 colNumber++;
             }
