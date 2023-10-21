@@ -53,6 +53,7 @@ public class Tile extends JPanel {
     }
 
 
+// TODO - CURRENTLY THE RADAR SCREEN SPRITES CAN BE FLIPPED IF THE ROTATE VALUE IS SET TO EAST. FIX THIS BECAUSE ITS WEIRD
 
     public Tile(String coord, GridElement grid) throws IOException {
         this.gridIndex = GridElement.coord_to_index(coord);
