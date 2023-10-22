@@ -67,6 +67,7 @@ public class Tile extends JPanel {
 
         this.grid = grid;
 
+        // dictates which base sprite to use
         switch (this.type) {
             case MAP -> {
                 current_sprite =  waves;
@@ -75,6 +76,7 @@ public class Tile extends JPanel {
                 current_sprite = radar;
             }
         }
+            // a lot of this code is temporary - not the drawShipsToTiles method however
             this.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -106,6 +108,7 @@ public class Tile extends JPanel {
 
         Graphics2D g2d = (Graphics2D) g.create();
 
+        // flips the sprite if the sprite is facing right
         if (ShipScreen.getDir() == 'e' && current_sprite != this.waves) {
             this.ship_transform.scale(-1, 1);
             ship_transform.translate(-current_sprite.getWidth(), 0);
@@ -129,16 +132,21 @@ public class Tile extends JPanel {
             throw new IllegalArgumentException("Err - Ship lenght shorter than 2");
         }
 
-        // replace with switch case for all directions possible
+
 
         switch (ShipScreen.getDir()) {
             case 'n' : {
+                //check if final pos is a ship
                 if (grid.getTile(ind[0], ind[1]- (length-1)).isShip()) {
                     return;
                 }
                 setShipPart(shipPart.BACK);
+
+                // add middle ship parts using for loop
                 for(int x = 0; x < length-2; x++) {
                     if (grid.getTile(ind[0], ind[1] - (1+x)).isShip()){
+
+                        // if landing on a ship during this loop, iterate backwards and reset all placed tiles
                         for (int y = 1; y < x+2; y++) {
                             grid.getTile(ind[0], ind[1] - (1+(x-y))).setShip(false);
                         }
@@ -150,6 +158,8 @@ public class Tile extends JPanel {
                 grid.getTile(ind[0], ind[1] - length+1).setShipPart(shipPart.FRONT);
                 break;
             }
+
+            // the next cases are just repeated, however numbers are swapped out depending on the direction
             case 'e' : {
 
                 if (grid.getTile(ind[0] + (length-1), ind[1]).isShip()) {
@@ -210,15 +220,17 @@ public class Tile extends JPanel {
     }
 
 
-
+    // returns the index of the tile on the GridElement its on
     public int[] getGridIndex() {
         return this.gridIndex;
     }
 
+    // returns true if the Tile is any part of a ship, front middle or back.
     public boolean isShip() {
         return this.isShip;
     }
 
+    // set whether the tile is a ship, if false replace sprite to background
     public void setShip(boolean yn) {
         if (!yn) {
             this.current_sprite = this.waves;
@@ -227,22 +239,27 @@ public class Tile extends JPanel {
         this.updateUI();
     }
 
+    // get if the ship is damaged
     public boolean getDamaged() {
         return this.damaged;
     }
 
+    // get what part of the ship it is
     public Tile.shipPart getShipPart() {
         return this.shipPart;
     }
 
+    // set the ship ID, this ID will be used to check if all parts of a ship of the same ID are destroyed.
     public void setShipID() {
         this.shipID = lastShipID++;
     }
 
+    // get the ships numerical ID
     public int getShipID() {
         return this.shipID;
     }
 
+    // set whether the ship is damaged or not
     public void setDamaged(boolean damaged) {
 
         this.damaged = damaged;
@@ -267,7 +284,8 @@ public class Tile extends JPanel {
     }
 
 
-    public void setShipPart(Tile.shipPart shipPart) {
+    // set which part of the ship it is - TODO take into consideration the direction for up and down
+    public void setShipPart(Tile.shipPart shipPart/*, char dir*/) {
         this.isShip = true;
         switch (shipPart) {
             case FRONT:
@@ -287,6 +305,7 @@ public class Tile extends JPanel {
         this.updateUI();
     }
 
+    // an enum because I like enums used to set what part of a ship something is. Good for switch/case statements
     public enum shipPart {
         FRONT,
         MIDDLE,

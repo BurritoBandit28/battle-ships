@@ -82,15 +82,16 @@ public class GridElement extends JPanel {
         return new int[]{Integer.parseInt(coords[1]) - 1, letter_to_int(coords[0])};
     }
 
-    // Retrieve the Tile object at the specified grid coordinates (x, y)
-    // Parameters:
-    // - x: The column index of the desired tile (0 to 9)
-    // - y: The row index of the desired tile (0 to 9)
-    // Returns:
-    // - The Tile object located at the specified coordinates
-    // x and y flipped because it was all fucky, basically just imagine its not there everything works the way you expect
+    // this method sickens me to the core. It covers its hideous face in a thin veil of deception - it appears as merely a basic "getter" function
+    // you couldn't be more wrong
+    // behind its curtain lies a visage so putrid and vile it makes even The Beast quiver where he stands
+    // but like a bad habit that plagues your everyday doings, it is relied on like a drug.
+    // it hides my deepest and worst failings, why have I made the coordinates rely on sketchy alphanumerical values?
+    // on a user side it is entirely hidden, just like the demons that walk among us in our cities, towns and homes
+    // but I know it's there
     public Tile getTile(int x, int y) {
         return grid[y][x];
+        // I hate it I hate it I hate it I hate it I hate it
     }
 
     // Enum representing the type of the grid (MAP or RADAR)
