@@ -5,6 +5,7 @@ import game.Tile;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 
 // GridElement class represents a panel for displaying a grid of tiles
@@ -54,6 +55,29 @@ public class GridElement extends JPanel {
         }
     }
 
+    public boolean getIsShipDestroyed(int id) {
+        ArrayList<Boolean> b = new ArrayList<>();
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
+                if (this.getTile(i,j).isShip() && this.getTile(i,j).getShipID() == id) {
+                    b.add(this.getTile(i,j).getDamaged());
+                }
+            }
+        }
+        int x = 0;
+        for (int i = 0; i < b.size(); i++) {
+            if (!b.get(i)) {
+                x++;
+            }
+        }
+        if (x > 0) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
     // Get the type of the grid (MAP or RADAR)
     public GridType getType() {
         return this.type;
@@ -74,6 +98,10 @@ public class GridElement extends JPanel {
             }
         }
         return -1;
+    }
+
+    public Tile[][] getGrid() {
+        return grid;
     }
 
     // Convert grid coordinates (e.g., "A,1") to grid indices (row and column)

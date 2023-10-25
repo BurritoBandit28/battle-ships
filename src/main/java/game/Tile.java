@@ -12,6 +12,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Tile extends JPanel {
 
@@ -30,16 +31,29 @@ public class Tile extends JPanel {
 
     // sprites
     private final String sprite_location = "src/main/resources/sprites/";
+
+    private final String ship_front = "/ship_front.png";
+    private BufferedImage ship_middle = ImageIO.read(new File(sprite_location + "ship_middle.png"));
+    private BufferedImage ship_middle_top = ImageIO.read(new File(sprite_location + "ship_middle_top.png"));
+    private final String ship_back = "/ship_back.png";
+
+
+    private final String ship_combined = "ship_combined.png";
+
     private BufferedImage waves = ImageIO.read(new File(sprite_location + "waves.png"));
     private BufferedImage radar = ImageIO.read(new File(sprite_location + "radar.png"));
+
+    private BufferedImage fire = ImageIO.read(new File(sprite_location + "fire.png"));
+    private BufferedImage radar_selected = ImageIO.read(new File(sprite_location + "selected.png"));
     private BufferedImage enemy_sunk = ImageIO.read(new File(sprite_location + "enemy_sunk.png"));
     private BufferedImage enemy_damaged = ImageIO.read(new File(sprite_location + "enemy_damaged.png"));
-    private BufferedImage ship_front = ImageIO.read(new File(sprite_location + "ship_front.png"));
-    private BufferedImage ship_middle = ImageIO.read(new File(sprite_location + "ship_middle.png"));
-    private BufferedImage ship_back = ImageIO.read(new File(sprite_location + "ship_back.png"));
-    private AffineTransform ship_transform = new AffineTransform();
-    private AffineTransform radar_transform = new AffineTransform();
+
     /*
+
+    private BufferedImage ship_front = ImageIO.read(new File(sprite_location + "ship_front.png"));
+
+    private BufferedImage ship_back = ImageIO.read(new File(sprite_location + "ship_back.png"));
+
     private BufferedImage ship_front_damaged = ImageIO.read(new File(sprite_location + "ship_front_damaged.png"));
     private BufferedImage ship_middle_damaged = ImageIO.read(new File(sprite_location + "ship_middle_damaged.png"));
     private BufferedImage ship_back_damaged = ImageIO.read(new File(sprite_location + "ship_back_damaged.png"));
@@ -62,8 +76,6 @@ public class Tile extends JPanel {
         this.shipPart = shipPart.NONE;
         this.type = grid.getType();
 
-        ship_transform.scale(3.737, 3.737);
-        radar_transform = ship_transform;
 
         this.grid = grid;
 
@@ -83,16 +95,25 @@ public class Tile extends JPanel {
                     super.mouseClicked(e);
                     if (type == GridElement.GridType.MAP) {
 
-                        // does what it says on the tin - value of 6 for testing purposes only
-                        drawShipsToTiles(3);
+                        if (isShip()) {
+                            setDamaged(!getDamaged());
+                        }
+                        else {
+                            // does what it says on the tin - value of 6 for testing purposes only
+                            try {
+                                drawShipsToTiles(3);
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
 
                     }
                     else {
-                        if (current_sprite == enemy_damaged) {
-                            current_sprite = enemy_sunk;
+                        if (current_sprite == radar_selected) {
+                            current_sprite = radar;
                         }
                         else {
-                            current_sprite = enemy_damaged;
+                            current_sprite = radar_selected;
                         }
                     }
 
@@ -108,20 +129,19 @@ public class Tile extends JPanel {
 
         Graphics2D g2d = (Graphics2D) g.create();
 
-        // flips the sprite if the sprite is facing right
-        if (ShipScreen.getDir() == 'e' && current_sprite != this.waves) {
-            this.ship_transform.scale(-1, 1);
-            ship_transform.translate(-current_sprite.getWidth(), 0);
+        AffineTransform at = new AffineTransform();
+        at.scale(3.737,3.737);
+
+        g2d.drawRenderedImage(current_sprite, at);
+
+        if (isShip() && this.getDamaged()) {
+            g2d.drawRenderedImage(fire, at);
         }
-        if (this.type == GridElement.GridType.MAP) {
-            g2d.drawRenderedImage(current_sprite, this.ship_transform);
-        }
-        else {
-            g2d.drawRenderedImage(current_sprite, this.radar_transform);
-        }
+        g2d.dispose();
+
     }
 
-    private void drawShipsToTiles(int length) {
+    private void drawShipsToTiles(int length) throws IOException {
         int[] ind = getGridIndex();
 
         if (this.isShip()) {
@@ -140,7 +160,7 @@ public class Tile extends JPanel {
                 if (grid.getTile(ind[0], ind[1]- (length-1)).isShip()) {
                     return;
                 }
-                setShipPart(shipPart.BACK);
+                setShipPart(shipPart.BACK, ShipScreen.getDir());
 
                 // add middle ship parts using for loop
                 for(int x = 0; x < length-2; x++) {
@@ -152,10 +172,10 @@ public class Tile extends JPanel {
                         }
                         return;
                     }
-                    grid.getTile(ind[0], ind[1] - (1+x)).setShipPart(shipPart.MIDDLE);
+                    grid.getTile(ind[0], ind[1] - (1+x)).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
                 }
 
-                grid.getTile(ind[0], ind[1] - length+1).setShipPart(shipPart.FRONT);
+                grid.getTile(ind[0], ind[1] - length+1).setShipPart(shipPart.FRONT,ShipScreen.getDir());
                 break;
             }
 
@@ -166,7 +186,7 @@ public class Tile extends JPanel {
                     return;
                 };
 
-                setShipPart(shipPart.BACK);
+                setShipPart(shipPart.BACK,ShipScreen.getDir());
                 for(int x = 0; x < length-2; x++) {
                     if (grid.getTile(ind[0] + (1 + x), ind[1]).isShip()){
                         for (int y = 1; y < x+2; y++) {
@@ -174,9 +194,9 @@ public class Tile extends JPanel {
                         }
                         return;
                     }
-                    grid.getTile(ind[0] + (1 + x), ind[1]).setShipPart(shipPart.MIDDLE);
+                    grid.getTile(ind[0] + (1 + x), ind[1]).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
                 }
-                grid.getTile(ind[0] + length-1, ind[1]).setShipPart(shipPart.FRONT);
+                grid.getTile(ind[0] + length-1, ind[1]).setShipPart(shipPart.FRONT,ShipScreen.getDir());
 
                 break;
             }
@@ -185,7 +205,7 @@ public class Tile extends JPanel {
                 if (grid.getTile(ind[0], ind[1] + (length-1)).isShip()) {
                     return;
                 }
-                setShipPart(shipPart.BACK);
+                setShipPart(shipPart.BACK,ShipScreen.getDir());
                 for(int x = 0; x < length-2; x++) {
                     if (grid.getTile(ind[0], ind[1] + (1+x)).isShip()) {
                         for (int y = 1; y < x+2; y++) {
@@ -193,17 +213,17 @@ public class Tile extends JPanel {
                         }
                         return;
                     }
-                    grid.getTile(ind[0], ind[1] + (1+x)).setShipPart(shipPart.MIDDLE);
+                    grid.getTile(ind[0], ind[1] + (1+x)).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
 
                 }
-                grid.getTile(ind[0], ind[1] + length-1).setShipPart(shipPart.FRONT);
+                grid.getTile(ind[0], ind[1] + length-1).setShipPart(shipPart.FRONT,ShipScreen.getDir());
                 break;
             }
             case 'w' : {
                 if (grid.getTile(ind[0]-(length-1), ind[1]).isShip()) {
                     return;
                 }
-                setShipPart(shipPart.BACK);
+                setShipPart(shipPart.BACK,ShipScreen.getDir());
                 for (int x = 0; x < length-2; x++){
                     if (grid.getTile(ind[0] - (1+x), ind[1]).isShip()) {
                         for (int y = 1; y < x+2; y++) {
@@ -211,9 +231,9 @@ public class Tile extends JPanel {
                         }
                         return;
                     }
-                    grid.getTile(ind[0] - (1+x), ind[1]).setShipPart(shipPart.MIDDLE);
+                    grid.getTile(ind[0] - (1+x), ind[1]).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
                 }
-                grid.getTile(ind[0] - length+1, ind[1]).setShipPart(shipPart.FRONT);
+                grid.getTile(ind[0] - length+1, ind[1]).setShipPart(shipPart.FRONT,ShipScreen.getDir());
                 break;
             }
         }
@@ -234,6 +254,7 @@ public class Tile extends JPanel {
     public void setShip(boolean yn) {
         if (!yn) {
             this.current_sprite = this.waves;
+            this.setShipID(0);
         }
         this.isShip = yn;
         this.updateUI();
@@ -244,14 +265,15 @@ public class Tile extends JPanel {
         return this.damaged;
     }
 
+
     // get what part of the ship it is
     public Tile.shipPart getShipPart() {
         return this.shipPart;
     }
 
     // set the ship ID, this ID will be used to check if all parts of a ship of the same ID are destroyed.
-    public void setShipID() {
-        this.shipID = lastShipID++;
+    public void setShipID(int id) {
+        this.shipID = id;
     }
 
     // get the ships numerical ID
@@ -285,17 +307,23 @@ public class Tile extends JPanel {
 
 
     // set which part of the ship it is - TODO take into consideration the direction for up and down
-    public void setShipPart(Tile.shipPart shipPart/*, char dir*/) {
+    public void setShipPart(Tile.shipPart shipPart, char dir) throws IOException {
         this.isShip = true;
+        this.setShipID(lastShipID+1);
         switch (shipPart) {
             case FRONT:
-                this.current_sprite = ship_front;
+                this.current_sprite = ImageIO.read(new File(sprite_location + "/"+dir + ship_front));
                 break;
             case MIDDLE:
-                this.current_sprite = ship_middle;
+                if (dir == 'n' || dir == 's') {
+                    this.current_sprite = ship_middle_top;
+                }
+                else {
+                    this.current_sprite = ship_middle;
+                }
                 break;
             case BACK:
-                this.current_sprite = ship_back;
+                this.current_sprite = ImageIO.read(new File(sprite_location + "/"+dir + ship_back));
                 break;
             case NONE:
                 setShip(false);

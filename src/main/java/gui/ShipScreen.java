@@ -17,6 +17,7 @@ public class ShipScreen extends JFrame implements KeyListener {
     private static GridElement shipGrid;
     private static GridElement radarGrid;
 
+
     private static int dir = 0;
 
     private static char[] lookup = {
