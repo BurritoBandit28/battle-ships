@@ -42,7 +42,7 @@ public class Tile extends JPanel {
 
     private BufferedImage waves = ImageIO.read(new File(sprite_location + "waves.png"));
     private BufferedImage radar = ImageIO.read(new File(sprite_location + "radar.png"));
-
+    private BufferedImage splish = ImageIO.read(new File(sprite_location+ "splash.png"));
     private BufferedImage fire = ImageIO.read(new File(sprite_location + "fire.png"));
     private BufferedImage radar_selected = ImageIO.read(new File(sprite_location + "selected.png"));
     private BufferedImage enemy_sunk = ImageIO.read(new File(sprite_location + "enemy_sunk.png"));
@@ -303,6 +303,11 @@ public class Tile extends JPanel {
 
          */
         this.updateUI();
+    }
+
+    public void splishSplashTehe() {
+        this.current_sprite = splish;
+        updateUI();
     }
 
 
