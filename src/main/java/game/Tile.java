@@ -17,8 +17,11 @@ import java.util.ArrayList;
 public class Tile extends JPanel {
 
     private int[] gridIndex;
+
     private boolean damaged;
     private boolean isShip;
+
+    private boolean isSelected;
     private shipPart shipPart;
 
     private int shipID=0;
@@ -61,6 +64,8 @@ public class Tile extends JPanel {
 
     private BufferedImage current_sprite;
 
+
+
     @Override
     public Dimension getPreferredSize() {
         return new Dimension(60, 60);
@@ -90,31 +95,30 @@ public class Tile extends JPanel {
         }
             // a lot of this code is temporary - not the drawShipsToTiles method however
             this.addMouseListener(new MouseAdapter() {
+                private static int placeIterator = 0;
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     super.mouseClicked(e);
-                    if (type == GridElement.GridType.MAP) {
-
-                        if (isShip()) {
-                            setDamaged(!getDamaged());
+                    boolean b;
+                    if (type == GridElement.GridType.MAP && ShipScreen.getGameState() == ShipScreen.GameState.PLACE && this.placeIterator < 5 && !isShip()) {
+                        try {
+                          b =  drawShipsToTiles(ShipScreen.boat_sizes[this.placeIterator]);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
                         }
-                        else {
-                            // does what it says on the tin - value of 6 for testing purposes only
-                            try {
-                                drawShipsToTiles(3);
-                            } catch (IOException ex) {
-                                throw new RuntimeException(ex);
-                            }
+                        System.out.println(this.placeIterator);
+                        if (b){
+                            this.placeIterator++;
                         }
-
                     }
-                    else {
-                        if (current_sprite == radar_selected) {
-                            current_sprite = radar;
-                        }
-                        else {
-                            current_sprite = radar_selected;
-                        }
+                    if (placeIterator > 4) {
+                        ShipScreen.setGameState(ShipScreen.GameState.ATTACK);
+                    }
+
+                    if (ShipScreen.getGameState() == ShipScreen.GameState.ATTACK && type == GridElement.GridType.RADAR) {
+                        setRadarSelected();
+                        System.out.println(grid.getSELECTED_INDEX());
+                        ShipScreen.getButton().updateUI();
                     }
 
                     updateUI();
@@ -141,11 +145,39 @@ public class Tile extends JPanel {
 
     }
 
-    private void drawShipsToTiles(int length) throws IOException {
+    public void setSelected(boolean b) {
+        this.isSelected = b;
+    }
+
+    public boolean getSelected() {
+        return this.isSelected;
+    }
+
+    public void updateSelectedRadarTile() {
+        for (int i = 0; i < grid.getGrid().length; i++) {
+            for (int j = 0; j < grid.getGrid()[i].length; j++) {
+                if (grid.getTile(i,j).getSelected()) {
+                    grid.getTile(i,j).current_sprite = radar;
+                    grid.getTile(i,j).updateUI();
+                    grid.getTile(i,j).setSelected(false);
+                    return;
+                }
+            }
+        }
+    }
+
+    public void setRadarSelected() {
+        updateSelectedRadarTile();
+        this.current_sprite = radar_selected;
+        this.setSelected(true);
+        grid.setSELECTED_INDEX(this.gridIndex);
+    }
+
+    private boolean drawShipsToTiles(int length) throws IOException {
         int[] ind = getGridIndex();
 
         if (this.isShip()) {
-            return;
+            return false;
         }
 
         if (length < 2) {
@@ -158,7 +190,7 @@ public class Tile extends JPanel {
             case 'n' : {
                 //check if final pos is a ship
                 if (grid.getTile(ind[0], ind[1]- (length-1)).isShip()) {
-                    return;
+                    return false;
                 }
                 setShipPart(shipPart.BACK, ShipScreen.getDir());
 
@@ -170,7 +202,7 @@ public class Tile extends JPanel {
                         for (int y = 1; y < x+2; y++) {
                             grid.getTile(ind[0], ind[1] - (1+(x-y))).setShip(false);
                         }
-                        return;
+                        return false;
                     }
                     grid.getTile(ind[0], ind[1] - (1+x)).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
                 }
@@ -183,7 +215,7 @@ public class Tile extends JPanel {
             case 'e' : {
 
                 if (grid.getTile(ind[0] + (length-1), ind[1]).isShip()) {
-                    return;
+                    return false;
                 };
 
                 setShipPart(shipPart.BACK,ShipScreen.getDir());
@@ -192,7 +224,7 @@ public class Tile extends JPanel {
                         for (int y = 1; y < x+2; y++) {
                             grid.getTile(ind[0] + (1 + (x-y)), ind[1]).setShip(false);
                         }
-                        return;
+                        return false;
                     }
                     grid.getTile(ind[0] + (1 + x), ind[1]).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
                 }
@@ -203,7 +235,7 @@ public class Tile extends JPanel {
             case 's' : {
 
                 if (grid.getTile(ind[0], ind[1] + (length-1)).isShip()) {
-                    return;
+                    return false;
                 }
                 setShipPart(shipPart.BACK,ShipScreen.getDir());
                 for(int x = 0; x < length-2; x++) {
@@ -211,7 +243,7 @@ public class Tile extends JPanel {
                         for (int y = 1; y < x+2; y++) {
                             grid.getTile(ind[0], ind[1] + (1+(x-y))).setShip(false);
                         }
-                        return;
+                        return false;
                     }
                     grid.getTile(ind[0], ind[1] + (1+x)).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
 
@@ -221,7 +253,7 @@ public class Tile extends JPanel {
             }
             case 'w' : {
                 if (grid.getTile(ind[0]-(length-1), ind[1]).isShip()) {
-                    return;
+                    return false;
                 }
                 setShipPart(shipPart.BACK,ShipScreen.getDir());
                 for (int x = 0; x < length-2; x++){
@@ -229,7 +261,7 @@ public class Tile extends JPanel {
                         for (int y = 1; y < x+2; y++) {
                             grid.getTile(ind[0] - (1+(x-y)), ind[1]).setShip(false);
                         }
-                        return;
+                        return false;
                     }
                     grid.getTile(ind[0] - (1+x), ind[1]).setShipPart(shipPart.MIDDLE,ShipScreen.getDir());
                 }
@@ -237,6 +269,7 @@ public class Tile extends JPanel {
                 break;
             }
         }
+        return true;
     }
 
 

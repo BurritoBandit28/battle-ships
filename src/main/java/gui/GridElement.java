@@ -28,6 +28,9 @@ public class GridElement extends JPanel {
     // Grid for holding Tile objects
     private Tile[][] grid = new Tile[10][10];
 
+    // the index of the selected grid element on the radar
+    private int[] SELECTED_INDEX = new int[2];
+
     // Test grid with numeric values (not used in the provided code)
     private int[][] test_grid = {
             // ... (initialization code omitted for brevity)
@@ -53,6 +56,14 @@ public class GridElement extends JPanel {
             }
             rowChar++;
         }
+    }
+
+    public int[] getSELECTED_INDEX() {
+        return SELECTED_INDEX;
+    }
+
+    public void setSELECTED_INDEX(int[] SELECTED_INDEX) {
+        this.SELECTED_INDEX = SELECTED_INDEX;
     }
 
     public boolean getIsShipDestroyed(int id) {
