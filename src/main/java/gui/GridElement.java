@@ -39,6 +39,8 @@ public class GridElement extends JPanel {
     // Enum representing the type of the grid (MAP or RADAR)
     private GridElement.GridType type;
 
+
+
     // Constructor for creating a GridElement with a specific type (MAP or RADAR)
     GridElement(GridType type) throws IOException {
         super(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -85,6 +87,39 @@ public class GridElement extends JPanel {
             return false;
         }
         else {
+            return true;
+        }
+    }
+
+
+    public boolean getIsShipDestroyed(int id, GridElement radar) {
+        ArrayList<Boolean> b = new ArrayList<>();
+        ArrayList<ArrayList<Integer>> indexes = new ArrayList<>();
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
+                if (this.getTile(i,j).isShip() && this.getTile(i,j).getShipID() == id) {
+                    b.add(this.getTile(i,j).getDamaged());
+                    ArrayList<Integer> il = new ArrayList<>();
+                    il.add(i);
+                    il.add(j);
+                    indexes.add(il);
+                }
+            }
+        }
+        int x = 0;
+        for (int i = 0; i < b.size(); i++) {
+            if (!b.get(i)) {
+                x++;
+            }
+        }
+        if (x > 0) {
+            return false;
+        }
+        else {
+            for (int i = 0; i < indexes.size(); i++) {
+                radar.getTile(indexes.get(i).get(0),indexes.get(i).get(1)).setDestroyed();
+                radar.getTile(indexes.get(i).get(0),indexes.get(i).get(1)).updateUI();
+            }
             return true;
         }
     }

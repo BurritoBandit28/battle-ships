@@ -32,24 +32,26 @@ public class Tile extends JPanel {
 
     private GridElement grid;
 
-    // sprites
-    private final String sprite_location = "src/main/resources/sprites/";
+    // sprites - this variable is stupid now - the variable name is longer than the string lol. icba to go back and change all its usages tho
+    private final String sprite_location = "sprites/";
 
     private final String ship_front = "/ship_front.png";
-    private BufferedImage ship_middle = ImageIO.read(new File(sprite_location + "ship_middle.png"));
-    private BufferedImage ship_middle_top = ImageIO.read(new File(sprite_location + "ship_middle_top.png"));
+    private BufferedImage ship_middle = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "ship_middle.png"));
+    private BufferedImage ship_middle_top = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "ship_middle_top.png"));
     private final String ship_back = "/ship_back.png";
 
 
     private final String ship_combined = "ship_combined.png";
 
-    private BufferedImage waves = ImageIO.read(new File(sprite_location + "waves.png"));
-    private BufferedImage radar = ImageIO.read(new File(sprite_location + "radar.png"));
-    private BufferedImage splish = ImageIO.read(new File(sprite_location+ "splash.png"));
-    private BufferedImage fire = ImageIO.read(new File(sprite_location + "fire.png"));
-    private BufferedImage radar_selected = ImageIO.read(new File(sprite_location + "selected.png"));
-    private BufferedImage enemy_sunk = ImageIO.read(new File(sprite_location + "enemy_sunk.png"));
-    private BufferedImage enemy_damaged = ImageIO.read(new File(sprite_location + "enemy_damaged.png"));
+    private BufferedImage waves = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "waves.png"));
+    private BufferedImage radar = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "radar.png"));
+    private BufferedImage splish = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location+ "splash.png"));
+
+    private BufferedImage miss = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location+ "miss.png"));
+    private BufferedImage fire = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "fire.png"));
+    private BufferedImage radar_selected = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "selected.png"));
+    private BufferedImage enemy_sunk = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "enemy_sunk.png"));
+    private BufferedImage enemy_damaged = ImageIO.read(ClassLoader.getSystemResourceAsStream(sprite_location + "enemy_damaged.png"));
 
     /*
 
@@ -106,7 +108,6 @@ public class Tile extends JPanel {
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);
                         }
-                        System.out.println(this.placeIterator);
                         if (b){
                             this.placeIterator++;
                         }
@@ -115,9 +116,8 @@ public class Tile extends JPanel {
                         ShipScreen.setGameState(ShipScreen.GameState.ATTACK);
                     }
 
-                    if (ShipScreen.getGameState() == ShipScreen.GameState.ATTACK && type == GridElement.GridType.RADAR) {
+                    if (ShipScreen.getGameState() == ShipScreen.GameState.ATTACK && type == GridElement.GridType.RADAR && current_sprite == radar) {
                         setRadarSelected();
-                        System.out.println(grid.getSELECTED_INDEX());
                         ShipScreen.getButton().updateUI();
                     }
 
@@ -127,6 +127,26 @@ public class Tile extends JPanel {
 
     }
 
+    public void setHit() {
+        this.current_sprite = enemy_damaged;
+    }
+
+    public void setDestroyed() {
+        this.current_sprite = enemy_sunk;
+    }
+
+    public void setMiss() {
+        this.current_sprite = miss;
+    }
+
+    public boolean hasRadarHitTexture() {
+        if (current_sprite != radar_selected &&  current_sprite != radar) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 
     protected void paintComponent(Graphics g ) {
         super.paintComponent(g);
@@ -298,6 +318,10 @@ public class Tile extends JPanel {
         return this.damaged;
     }
 
+    public void setShipDamaged(boolean b) {
+        this.damaged = b;
+    }
+
 
     // get what part of the ship it is
     public Tile.shipPart getShipPart() {
@@ -340,7 +364,6 @@ public class Tile extends JPanel {
 
     public void splishSplashTehe() {
         this.current_sprite = splish;
-        updateUI();
     }
 
 
@@ -350,7 +373,7 @@ public class Tile extends JPanel {
         this.setShipID(lastShipID+1);
         switch (shipPart) {
             case FRONT:
-                this.current_sprite = ImageIO.read(new File(sprite_location + "/"+dir + ship_front));
+                this.current_sprite = ImageIO.read(ClassLoader.getSystemResourceAsStream("sprites/"+dir + "/ship_front.png"));
                 break;
             case MIDDLE:
                 if (dir == 'n' || dir == 's') {
@@ -361,7 +384,7 @@ public class Tile extends JPanel {
                 }
                 break;
             case BACK:
-                this.current_sprite = ImageIO.read(new File(sprite_location + "/"+dir + ship_back));
+                this.current_sprite = ImageIO.read(ClassLoader.getSystemResourceAsStream("sprites/"+dir + "/ship_back.png"));
                 break;
             case NONE:
                 setShip(false);
